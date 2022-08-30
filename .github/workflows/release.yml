@@ -1,0 +1,53 @@
+name: release
+
+on:
+  push:
+    # run only against tags
+    branches:
+      - main
+      - beta
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ✨ Checkout repository
+        uses: actions/checkout@v3
+      - name: 💻 Set up Go
+        uses: actions/setup-go@v3
+      - name: 📥 Install dependencies
+        run: go get ./...
+      - name: 📝 Check code style
+        run: gofmt -d -s -w .
+      - name: 🔬 Test Go with coverage
+        run: go test -coverprofile=coverage.out ./... ; go tool cover -func=coverage.out
+      - name: 🎢 Upload coverage reports to Codecov
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -t ${{ secrets.CODECOV_TOKEN }}
+  release:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: ✨ Checkout repository
+        uses: actions/checkout@v3
+      - name: 💻 Set up Go
+        uses: actions/setup-go@v3
+      - name: 📥 Install dependencies
+        run: go get ./...
+      - name: 📝 Check code style
+        run: gofmt -d -s -w .
+      - name: 🚅 Prepare release
+        uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: go
+          package-name: grace
+          bump-minor-pre-major: true
+          bump-patch-for-minor-pre-major: true
+          extra-files: |
+            README.md
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      tag_name: ${{ steps.release-please.outputs.tag_name }}
