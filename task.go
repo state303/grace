@@ -19,7 +19,7 @@ type Task interface {
 }
 
 // With returns new Task instance
-func With(step func() error) Task {
+func With(step Step) Task {
 	if step == nil {
 		step = func() error { return nil }
 	}
@@ -37,12 +37,15 @@ func WithNoErr(step func()) Task {
 	})
 }
 
+type Step func() error
+
 // task as an implementation of Task
 type task struct {
-	step func() error
+	step Step
 	next Task
 }
 
+// Run implement Task.Run
 func (t *task) Run(ctx context.Context) error {
 	errChan, done := make(chan error, 1), make(chan struct{}, 1)
 	go func() {
