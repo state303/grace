@@ -125,6 +125,11 @@ func TestTask_Run_MustReportContextError_WhenNotPanic(t *testing.T) {
 	assert.ErrorIs(t, err, context.Canceled)
 }
 
+func TestWith_MustPropagateError(t *testing.T) {
+	t1, t2 := With(nil), With(func() error { return errors.New("test error") })
+	assert.ErrorContains(t, t1.Then(t2).Run(context.Background()), "test error")
+}
+
 func TestWith_MustHandleNilArg_AsNoOp(t *testing.T) {
 	assert.NotPanics(t, func() {
 		tt := With(nil)

@@ -92,19 +92,16 @@ func (t *task) Run(ctx context.Context) error {
 
 // Then implements Task.Then
 func (t *task) Then(next Task) Task {
-
 	// always copy a task into a new instance of task.
 	cp := &task{
 		step: t.step,
 		next: t.next,
 	}
-
 	// assign next task accordingly.
 	if cp.next == nil {
 		cp.next = next
 	} else {
 		cp.next = cp.next.Then(next) // keep immutability
 	}
-
 	return cp
 }
