@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/state303/grace/compare/v1.1.0...v1.2.0) (2022-09-01)
+
+
+### Features
+
+* implements Step and Next. addresses issue [#8](https://github.com/state303/grace/issues/8) ([f2d9114](https://github.com/state303/grace/commit/f2d911426a4d382dd1583deb40aab1f0504e83a4))
+
 ## [1.1.0](https://github.com/state303/grace/compare/v1.0.0...v1.1.0) (2022-08-30)
 
 
