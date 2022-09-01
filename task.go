@@ -9,13 +9,18 @@ import (
 // Task is an abstraction that represents a single task.
 // This may, or may not have chained tasks
 type Task interface {
-
 	// Run with context. This context will be propagated to every chained task.
 	Run(ctx context.Context) error
 
 	// Then chains this Task with that Task; every each as a new, copied Task instance.
 	// The action is immutable, hence does not affect caller.
 	Then(that Task) Task
+
+	// Step returns a grace.Step instance that is assigned to this Task instance.
+	Step() Step
+
+	// Next returns a grace.Task instance that is assigned as next task from this Task.
+	Next() Task
 }
 
 // With returns new Task instance
@@ -65,18 +70,25 @@ func (t *task) Run(ctx context.Context) error {
 			defer close(done)
 		}()
 
-		// run step from THIS task.
-		if err := t.step(); err != nil {
+		// assign initial step
+		var tt Task
+		tt = t
+
+	dig:
+		if ctx.Err() != nil { // context canceled or deadline exceeded, etc
+			return
+		}
+		step := tt.Step()
+
+		if err := step(); err != nil {
 			errChan <- err
 			return
 		}
 
-		// check and run next step if exists
-		if t.next != nil {
-			if err := t.next.Run(ctx); err != nil {
-				errChan <- err // propagation for error
-				return
-			}
+		// check and dig next step if exists
+		if tt.Next() != nil {
+			tt = tt.Next()
+			goto dig
 		}
 
 		// observed no error, thus signal success
@@ -107,4 +119,12 @@ func (t *task) Then(next Task) Task {
 		cp.next = cp.next.Then(next) // keep immutability
 	}
 	return cp
+}
+
+func (t *task) Step() Step {
+	return t.step
+}
+
+func (t *task) Next() Task {
+	return t.next
 }
